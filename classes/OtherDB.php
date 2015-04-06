@@ -1,9 +1,9 @@
 <?php
 /**
  * OtherDB Class
- * 
+ *
  * PHP version 5.4
- * 
+ *
  * @category Class
  * @package  MultiDB_Search
  * @author   Pierre Rudloff <contact@rudloff.pro>
@@ -13,9 +13,9 @@
 
 /**
  * Class used to search in another database
- * 
+ *
  * PHP version 5.4
- * 
+ *
  * @category Class
  * @package  MultiDB_Search
  * @author   Pierre Rudloff <contact@rudloff.pro>
@@ -25,23 +25,26 @@
 class OtherDB
 {
     private $_dbName;
-    
+    private $_otherURL;
+
     /**
      * OtherDB constructor
-     * 
-     * @param string $dbName Other database name
+     *
+     * @param string $dbName   Other database name
+     * @param string $otherURL Other WordPress base URL
      * */
-    function __construct($dbName)
+    function __construct($dbName, $otherURL)
     {
         $this->_dbName = $dbName;
+        $this->_otherURL = $otherURL;
     }
-    
+
     /**
      * Custom search
-     * 
+     *
      * @param array  $posts    Posts returned by search
      * @param object $wp_query Query
-     * 
+     *
      * @return array Posts
      * */
     function search($posts, &$wp_query)
@@ -66,22 +69,22 @@ class OtherDB
 
     /**
      * Register a custom post type
-     * 
+     *
      * @return void
      * */
-    function registerPostType() 
+    function registerPostType()
     {
         register_post_type('otherdb_post');
     }
 
     /**
      * Redirect to other WordPress
-     * 
+     *
      * @param object $request Request
-     * 
+     *
      * @return object Request
      * */
-    function redirect($request) 
+    function redirect($request)
     {
         if (isset($request['otherdb_post'])) {
             global $wpdb;
@@ -92,7 +95,7 @@ class OtherDB
             $posts = $query->get_posts();
             header(
                 'Location: '.str_replace(
-                    get_option('home'), OTHERWP_URL,
+                    get_option('home'), $this->_otherURL,
                     get_permalink($posts[0]->ID)
                 )
             );
@@ -104,32 +107,35 @@ class OtherDB
 
     /**
      * Remove edit link from posts
-     * 
+     *
      * @param string $link HTML
      * @param int    $id   Post ID
      * @param string $text Link content
-     * 
+     *
      * @return false
      * @todo   Find a way to remove only for distant posts
      * */
-    function removeEditLink($link, $id, $text) 
+    function removeEditLink($link, $id, $text)
     {
         return false;
     }
-    
+
     /**
      * Add setting input field
-     * 
+     *
+     * @param array $setting Setting
+     *
      * @return void
      * */
-    function addSetting()
+    function addSetting($setting)
     {
-        echo '<input name="otherdb_name" value="'.$this->_dbName. '" type="text" />';
+        echo '<input name="'.$setting['name'].'"
+            value="'.$setting['value'].'" type="text" />';
     }
 
     /**
      * Add custom settings
-     * 
+     *
      * @return void
      * */
     function settings()
@@ -138,8 +144,17 @@ class OtherDB
             'otherdb_name',
             'Other Database name',
             array($this, 'addSetting'),
-            'general'
+            'general', 'default',
+            array('name'=>'otherdb_name', 'value'=>$this->_dbName)
+        );
+        add_settings_field(
+            'otherdb_url',
+            'Other WordPress URL',
+            array($this, 'addSetting'),
+            'general', 'default',
+            array('name'=>'otherdb_url', 'value'=>$this->_otherURL)
         );
         register_setting('general', 'otherdb_name');
-    } 
+        register_setting('general', 'otherdb_url');
+    }
 }

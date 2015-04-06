@@ -16,7 +16,7 @@
  * @link     https://github.com/Rudloff/wp-multidbsearch
  * */
 require_once 'classes/OtherDB.php';
-$otherDB = new OtherDB(get_option('otherdb_name'));
+$otherDB = new OtherDB(get_option('otherdb_name'), get_option('otherdb_url'));
 
 add_action('admin_init', array($otherDB, 'settings'));
 add_action('init', array($otherDB, 'registerPostType'));
