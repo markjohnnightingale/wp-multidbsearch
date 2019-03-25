@@ -3,7 +3,7 @@
  * Plugin Name: MultiDB Search
  * Description: Search in multiple databases
  * Author: Pierre Rudloff and Mark Nightingale
- * Version: 0.1
+ * Version: 0.2
  * Author URI: https://marknightingale.net/
  * Plugin URI: https://github.com/markjohnnightingale/wp-multidbsearch
  * 
