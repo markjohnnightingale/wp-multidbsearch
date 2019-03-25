@@ -37,6 +37,15 @@ class MultiDB {
     }
 
     /**
+     * Hook run on plugin delete
+     *
+     * @return void
+     */
+    public function delete() {
+        $this->drop_tables();
+    }
+
+    /**
      * Create database tables for plugin
      *
      * @return void
@@ -53,6 +62,19 @@ class MultiDB {
 			PRIMARY KEY  (id)
 		) $charset_collate;";
 		dbDelta( $sql );
+    }
+
+    /**
+     * Delete tables from Database for plugin
+     *
+     * @return void
+     */
+    public function drop_tables() {
+        global $wpdb;
+        $table_name = $this->otherDBsTable;
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );        
+		$sql = "DROP TABLE IF EXISTS  $table_name;";
+		$wpdb->query($sql);
     }
 
     /**

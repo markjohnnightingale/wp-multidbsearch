@@ -21,6 +21,7 @@ require_once 'classes/MultiDB.php';
 $multiDB = new MultiDB();
 
 register_activation_hook( __FILE__, array($multiDB, 'activate') );
+register_uninstall_hook( __FILE__, array($multiDB, 'delete') );
 
 add_action('init', array($multiDB, 'registerMainHooks'));
 add_filter('the_posts', array($multiDB, 'search'), 10, 2);
