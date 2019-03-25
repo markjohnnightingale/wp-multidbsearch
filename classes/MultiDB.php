@@ -58,6 +58,9 @@ class MultiDB {
 		$sql = "CREATE TABLE $table_name (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			dbname tinytext NOT NULL,
+			dbuser tinytext NOT NULL,
+			dbprefix tinytext NOT NULL,
+			dbpassword tinytext NOT NULL,
 			url tinytext NOT NULL,
 			PRIMARY KEY  (id)
 		) $charset_collate;";
@@ -105,7 +108,7 @@ class MultiDB {
         global $wpdb;
         $otherDBs = $wpdb->get_results("SELECT * from $this->otherDBsTable");
         foreach($otherDBs as $db) {
-            $this->otherDBs[] = new OtherDB($db->id, $db->dbname, $db->url);
+            $this->otherDBs[] = new OtherDB($db->id, $db->dbname, $db->dbuser, $db->dbprefix, $db->dbpassword, $db->url);
         }
     }
     
@@ -152,6 +155,9 @@ class MultiDB {
                 <tr>
                     <th>ID</th>
                     <th>DBName</th>
+                    <th>DBUser</th>
+                    <th>DBPrefix</th>
+                    <th>DBPassword</th>
                     <th>Wordpress URL</th>
                     <th></th>
                 </tr>
@@ -159,9 +165,11 @@ class MultiDB {
             <tbody style="text-align: center">
                 <?php foreach($this->otherDBs as $db) :?>
                     <tr>
-                        
                         <td><?php echo $db->getId() ?></td>
-                        <td><?php echo $db->getDbname() ?></td>
+                        <td><?php echo $db->getDbName() ?></td>
+                        <td><?php echo $db->getDbUser() ?></td>
+                        <td><?php echo $db->getDbPrefix() ?></td>
+                        <td><?php echo $db->getDbPassword() ?></td>
                         <td><a href="<?php echo $db->getUrl() ?>" target="_blank"><?php echo $db->getUrl() ?></a></td>
                         <td>
                             <form method="post">
@@ -177,6 +185,9 @@ class MultiDB {
                         <input type="hidden" name="action" value="add">
                         <td></td>
                         <td><input type="text" name="dbname"></td>
+                        <td><input type="text" name="dbuser"></td>
+                        <td><input type="text" name="dbprefix"></td>
+                        <td><input type="text" name="dbpassword"></td>
                         <td><input type="text" name="url"></td>
                         <td><button><?php _e('Ajouter');?></button></td>
                     </form>
@@ -200,13 +211,21 @@ class MultiDB {
                 $wpdb->query("DELETE FROM $this->otherDBsTable WHERE id = $id_to_delete");
                 
             }
-            if ($vars['action'] == 'add' && isset($vars['dbname']) && isset($vars['url'])) {
-                $dbname = $this->sanitizeDBName($vars['dbname']);
+            if ($vars['action'] == 'add' && isset($vars['dbname']) && isset($vars['url']) && isset($vars['dbuser']) && isset($vars['dbprefix']) && isset($vars['dbpassword'])) {
+                
+                $dbname = $this->sanitizeDbInfo($vars['dbname']);
+                $dbuser = $this->sanitizeDbInfo($vars['dbuser']);
+                $dbprefix = $this->sanitizeDbInfo($vars['dbprefix']);
+                $dbpassword = $this->sanitizeDbPassword($vars['dbpassword']);
                 $url = $this->sanitizeUrl($vars['url']);
-                if (!empty($dbname) && !empty($url)) {
-                    $statement = $wpdb->prepare("INSERT INTO $this->otherDBsTable (dbname, url) VALUES (%s, %s)", 
+                if (!empty($dbname) && !empty($dbuser) && !empty($dbprefix) && !empty($dbpassword) && !empty($url)) {
+                    
+                    $statement = $wpdb->prepare("INSERT INTO $this->otherDBsTable (dbname, dbuser, dbprefix, dbpassword, url) VALUES (%s, %s, %s, %s, %s)", 
                         [
                             $dbname,
+                            $dbuser,
+                            $dbprefix,
+                            $dbpassword,
                             $url
                         ]
                     );
@@ -218,23 +237,39 @@ class MultiDB {
     }
 
     /**
-     * Sanitize the DB name
+     * Sanitize the DB name, user
      *
      * @param string $text to sanitize
      * @return void
      */
-    public function sanitizeDBName($text) {
-        return preg_replace("/[^a-zA-Z_]/", "", $text);
+    public function sanitizeDbInfo($text) {
+        return preg_replace("/[^a-zA-Z0-9_]/", "", $text);
     }
+
+    /**
+     * Sanitize the DB password
+     *
+     * @param string $text
+     * @return string
+     */
+    public function sanitizeDbPassword($text) {
+        return $text;
+    }
+    
 
     /**
      * Sanitize URL
      *
      * @param string $url
-     * @return void
+     * @return string
      */
     public function sanitizeUrl($url) {
-        return filter_var($url, FILTER_SANITIZE_URL);
+        if (preg_match('=(\b(https?)://)[-A-Za-z0-9+&#/%~_|!:,.;]+[-A-Za-z0-9+&@#/%~_|]=', $url) > 0) {
+            return filter_var($url, FILTER_SANITIZE_URL);
+        } else {
+            echo 'URL is not correctly formatted. Make sure it includes http(s)://';
+            return '';
+        }
     }
     /**
      * Add setting input field
@@ -265,8 +300,8 @@ class MultiDB {
             $curwpdb = $wpdb;
             $curprefix = $wpdb->prefix;
             foreach($this->otherDBs as $db) {
-                $wpdb = new wpdb(DB_USER, DB_PASSWORD, $db->getDbname(), DB_HOST);
-                $wpdb->set_prefix($curprefix);
+                $wpdb = new wpdb($db->getDbUser(), $db->getDbPassword(true), $db->getDbName(), DB_HOST);
+                $wpdb->set_prefix($db->getDbPrefix());
                 $query = new WP_query($wp_query->query);
                 $otherposts = $query->get_posts();
                 foreach ($otherposts as &$post) {

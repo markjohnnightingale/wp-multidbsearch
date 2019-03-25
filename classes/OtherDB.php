@@ -24,19 +24,27 @@
  * */
 class OtherDB
 {
+    private $_id;
     private $_dbName;
+    private $_dbUser;
+    private $_dbPrefix;
+    private $_dbPassword;
     private $_otherURL;
 
     /**
      * OtherDB constructor
      *
-     * @param string $dbName   Other database name
-     * @param string $otherURL Other WordPress base URL
+     * @param string $id        ID of OtherDatabase in Database
+     * @param string $dbName    Other database name
+     * @param string $otherURL  Other WordPress base URL
      * */
-    function __construct($id, $dbName, $otherURL)
+    function __construct($id, $dbName, $dbUser, $dbPrefix, $dbPassword, $otherURL)
     {
         $this->_id = $id;
         $this->_dbName = $dbName;
+        $this->_dbUser = $dbUser;
+        $this->_dbPrefix = $dbPrefix;
+        $this->_dbPassword = $dbPassword;
         $this->_otherURL = $otherURL;
     }
 
@@ -44,8 +52,24 @@ class OtherDB
         return $this->_id;
     }
     
-    function getDbname() {
+    function getDbName() {
         return $this->_dbName;
+    }
+
+    function getDbUser() {
+        return $this->_dbUser;
+    }
+
+    function getDbPrefix() {
+        return $this->_dbPrefix;
+    }
+
+    function getDbPassword($show = false) {
+        if ($show) {
+            return $this->_dbPassword;
+        } else {
+            return '**********';
+        }
     }
 
     function getUrl() {
