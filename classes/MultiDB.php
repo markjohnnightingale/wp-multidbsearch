@@ -175,7 +175,7 @@ class MultiDB {
                             <form method="post">
                                 <input type="hidden" name="id" value="<?php echo $db->getId();?>">
                                 <input type="hidden" name="action" value="delete">
-                                <button><?php _e('Supprimer');?></button>
+                                <button class="button"><?php _e('Supprimer');?></button>
                             </form>
                         </td>
                     </tr>
@@ -189,11 +189,23 @@ class MultiDB {
                         <td><input type="text" name="dbprefix"></td>
                         <td><input type="text" name="dbpassword"></td>
                         <td><input type="text" name="url"></td>
-                        <td><button><?php _e('Ajouter');?></button></td>
+                        <td><button class="button"><?php _e('Ajouter');?></button></td>
                     </form>
                 </tr>
             </tbody>
-        </table>  
+        </table>
+        <div class="panel">
+            <form method="post">
+                <h2>
+                    <?php _e('Réglages');?>
+                </h2>
+                <p><strong><?php _e('Utiliser des redirections 301 dans les résultats de recherche');?></strong> <input type="checkbox" name="use_redirect_permalinks" value="1" <?php echo checked( get_option( 'mdb_use_redirect_permalinks', false ), '1'); ?> ><br>
+                <?php _e('Si vos sites ont des structures de permalien différents, cochez cette case pour que les permaliens dans les résultats de recherche soient modifiés en example.com/?p={post_id}');?><br></p>
+
+                <input type="hidden" name="action" value="settings">
+                <button class="button button-primary"><?php _e('Enregistrer les modifications');?></button>
+            </form>
+        </div>  
     <?php }
 
     /**
@@ -232,6 +244,13 @@ class MultiDB {
                     $query = $wpdb->query($statement);
                 }
             }
+            if ($vars['action'] == 'settings') {
+                if (isset($vars['use_redirect_permalinks']) && $vars['use_redirect_permalinks'] == 1) {
+                    update_option( 'mdb_use_redirect_permalinks', 1 );
+                } else {
+                    update_option('mdb_use_redirect_permalinks', 0);
+                }
+            }
         }
         $this->refreshOtherDBs();
     }
@@ -265,6 +284,7 @@ class MultiDB {
      */
     public function sanitizeUrl($url) {
         if (preg_match('=(\b(https?)://)[-A-Za-z0-9+&#/%~_|!:,.;]+[-A-Za-z0-9+&@#/%~_|]=', $url) > 0) {
+            $url = preg_replace('!/$!', '', $url);
             return filter_var($url, FILTER_SANITIZE_URL);
         } else {
             echo 'URL is not correctly formatted. Make sure it includes http(s)://';
@@ -330,7 +350,12 @@ class MultiDB {
             $id = (int)$matches[1];
             $db = $this->getOtherDBFromId($id);
             if ($db) {
-                $url = str_replace(get_option('home'), $db->getUrl(), get_permalink( $post->ID ));
+                if (get_option('mdb_use_redirect_permalinks', false)) {
+
+                    $url = $db->getUrl() . '/?p='. $post->ID;
+                } else {
+                    $url = str_replace(get_option('home'), $db->getUrl(), get_permalink( $post->ID ));
+                }
             }
         }
         return $url;
