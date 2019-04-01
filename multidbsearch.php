@@ -27,4 +27,6 @@ add_action('init', array($multiDB, 'registerMainHooks'));
 add_filter('the_posts', array($multiDB, 'search'), 10, 2);
 add_filter('post_type_link', array($multiDB, 'modifyPermalink'), 10, 2);
 add_filter('edit_post_link', array($multiDB, 'removeEditLink'), 10, 3);
+add_filter('has_post_thumbnail', array($multiDB, 'modifyHasPostThumbnail'), 10, 3);
+add_filter('post_thumbnail_html', array($multiDB, 'modifyThumbnailSrc'), 10, 1);
 ?>
