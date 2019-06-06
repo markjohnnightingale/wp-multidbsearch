@@ -44,9 +44,9 @@ class MultiDB
      *
      * @return void
      */
-    public function delete()
+    public static function delete()
     {
-        $this->drop_tables();
+        self::drop_tables();
     }
 
     /**
@@ -77,10 +77,10 @@ class MultiDB
      *
      * @return void
      */
-    public function drop_tables()
+    public static function drop_tables()
     {
         global $wpdb;
-        $table_name = $this->otherDBsTable;
+        $table_name = $wpdb->prefix . 'other_dbs';
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         $sql = "DROP TABLE IF EXISTS  $table_name;";
         $wpdb->query($sql);
@@ -382,8 +382,11 @@ class MultiDB
      * @return void
      */
     public function getOtherDbMeta($post_id, $wpdb, $meta_key) {
-        $sql = "SELECT `meta_value` FROM `". $wpdb->prefix."postmeta` WHERE `post_id` = $post_id AND `meta_key` LIKE '". $meta_key ."';";
-        return $wpdb->get_var($sql, 0, 0);
+		if (!empty($post_id)) {
+			$sql = "SELECT `meta_value` FROM `". $wpdb->prefix."postmeta` WHERE `post_id` = $post_id AND `meta_key` LIKE '". $meta_key ."';";
+			return $wpdb->get_var($sql, 0, 0);
+		}
+		return '';
     }
 
     /**
