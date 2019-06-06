@@ -366,11 +366,15 @@ class MultiDB
         );
         $posts = $query->get_posts();
         if (!$posts) {
-            return '';
+            return null;
         }
-        $thumbnail_id = $this->getOtherDbMeta($post_id, $wpdb, '_thumbnail_id');
-        $thumbnail_src = $this->getOtherDbMeta($thumbnail_id, $wpdb, '_wp_attached_file');
-        return $otherDb->getUrl() . '/wp-content/uploads/' . $thumbnail_src ;
+		$thumbnail_id = $this->getOtherDbMeta($post_id, $wpdb, '_thumbnail_id');
+		if (!empty($thumbnail_id)){
+			$thumbnail_src = $this->getOtherDbMeta($thumbnail_id, $wpdb, '_wp_attached_file');
+			return $otherDb->getUrl() . '/wp-content/uploads/' . $thumbnail_src ;
+		} else {
+			return null;
+		}
     }
 
     /**
@@ -382,11 +386,11 @@ class MultiDB
      * @return void
      */
     public function getOtherDbMeta($post_id, $wpdb, $meta_key) {
-		if (!empty($post_id)) {
+		if (!empty($post_id) && !empty($meta_key)) {
 			$sql = "SELECT `meta_value` FROM `". $wpdb->prefix."postmeta` WHERE `post_id` = $post_id AND `meta_key` LIKE '". $meta_key ."';";
 			return $wpdb->get_var($sql, 0, 0);
 		}
-		return '';
+		return null;
     }
 
     /**
